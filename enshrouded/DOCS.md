@@ -77,7 +77,9 @@ an den Home-Assistant-Rechner weiterleiten. Andere Ports braucht Enshrouded nich
    - **Freigabe aktiv** anhaken → OK → Übernehmen.
 
 Andere Router haben das gleiche Prinzip: „Port Forwarding / NAT“, UDP 15637 → IP des
-Home-Assistant-Rechners, Port 15637.
+Home-Assistant-Rechners, Port 15637. Eine Schritt-für-Schritt-Anleitung für
+**TP-Link** (Archer, ältere Modelle und Deco) steht im
+[README des Repositorys](https://github.com/beumelee/Enshrouded-HA#andere-mitspielen-lassen-tp-link-router).
 
 Den Port im Reiter **Netzwerk** der App bitte nicht ändern: der Server meldet sich
 mit Port 15637 bei Steam an.
