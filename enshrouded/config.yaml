@@ -1,0 +1,49 @@
+name: Enshrouded Dedicated Server
+version: "1.0.0"
+slug: enshrouded
+url: https://github.com/beumelee/Enshrouded-HA
+description: >-
+  Dedizierter Enshrouded-Server (Steam) mit Proton, automatischen Updates,
+  RAM-Limit und Savegames im Home-Assistant-Backup.
+arch:
+  - amd64
+startup: application
+boot: auto
+stage: experimental
+# Zeit für sauberes Herunterfahren (Server speichert beim Beenden)
+timeout: 120
+ports:
+  15637/udp: 15637
+ports_description:
+  15637/udp: Enshrouded Spiel- und Query-Port (am Router als UDP freigeben)
+map:
+  # /config im Container = /app_configs/<repo>_enshrouded (ältere HA: /addon_configs/...)
+  - type: addon_config
+    read_only: false
+# Spieldateien und Proton-Prefix werden beim Start neu geladen -> nicht ins Backup
+backup_exclude:
+  - "*/steam_server"
+  - "*/proton_prefix"
+options:
+  server_name: Enshrouded HomeServer
+  slot_count: 16
+  game_preset: Default
+  text_chat: true
+  voice_chat: false
+  voice_chat_mode: Proximity
+  auto_update: true
+  update_check_interval: 30
+  memory_limit_gb: 10
+schema:
+  server_name: str
+  admin_password: password
+  friend_password: password
+  guest_password: password?
+  slot_count: int(1,16)
+  game_preset: list(Default|Relaxed|Hard|Survival|Custom)
+  text_chat: bool
+  voice_chat: bool
+  voice_chat_mode: list(Proximity|Global)
+  auto_update: bool
+  update_check_interval: int(0,1440)
+  memory_limit_gb: int(4,64)

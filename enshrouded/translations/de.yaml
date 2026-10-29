@@ -1,0 +1,49 @@
+configuration:
+  server_name:
+    name: Servername
+    description: Name, unter dem der Server in der Enshrouded-Serverliste erscheint.
+  admin_password:
+    name: Admin-Passwort
+    description: >-
+      Mindestens 8 Zeichen. Wer damit beitritt, darf alles (auch kicken/bannen).
+  friend_password:
+    name: Freunde-Passwort
+    description: >-
+      Für deine Mitspieler: bauen, Basen erweitern, Truhen benutzen. Leer = jeder darf
+      ohne Passwort mit diesen Rechten beitreten.
+  guest_password:
+    name: Gast-Passwort (optional)
+    description: >-
+      Gäste dürfen spielen und abbauen, aber nichts an Basen ändern und keine Truhen öffnen.
+      Leer lassen = keine Gastgruppe.
+  slot_count:
+    name: Spielerplätze
+    description: Maximale Anzahl gleichzeitiger Spieler (1-16).
+  game_preset:
+    name: Schwierigkeit
+    description: >-
+      Voreinstellung des Spiels. "Custom" nutzt die gameSettings aus
+      enshrouded_server.json im App-Konfigurationsordner.
+  text_chat:
+    name: Text-Chat
+    description: Text-Chat im Spiel erlauben.
+  voice_chat:
+    name: Sprach-Chat
+    description: Sprach-Chat im Spiel erlauben.
+  voice_chat_mode:
+    name: Sprach-Chat-Modus
+    description: Proximity = nur Spieler in der Nähe hören dich, Global = alle.
+  auto_update:
+    name: Automatische Updates
+    description: >-
+      Server beim Start aktualisieren und regelmäßig nach neuen Versionen suchen.
+      Ein Update wird erst eingespielt, wenn niemand online ist.
+  update_check_interval:
+    name: Update-Prüfung (Minuten)
+    description: Wie oft nach einer neuen Server-Version gesucht wird. 0 = nur beim Start.
+  memory_limit_gb:
+    name: RAM-Limit (GB)
+    description: >-
+      Liegt der Server länger als 90 Sekunden über diesem Wert, wird er sauber neu gestartet.
+network:
+  15637/udp: Enshrouded Spiel- und Query-Port (am Router als UDP freigeben)
