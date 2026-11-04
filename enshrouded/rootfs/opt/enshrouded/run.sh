@@ -291,6 +291,8 @@ start_server() {
     info "Starte Enshrouded-Server \"${SERVER_NAME}\" (${SLOT_COUNT} Plätze, Preset ${GAME_PRESET})"
     : > "$SERVER_LOG"
     chown steam:steam "$SERVER_LOG"
+    # Altes Mod-Log entfernen, damit nach einem Absturz nicht der Stand vom letzten Start erscheint
+    rm -f "$SERVER_DIR/EnshroudedTogether.log"
     local logs=("$SERVER_LOG")
     # Mods wie EnshroudedTogether schreiben ihr eigenes Log neben die .exe
     [[ -n "$MOD_DLL_OVERRIDES" ]] && logs+=("$SERVER_DIR/EnshroudedTogether.log")
@@ -440,7 +442,7 @@ main() {
                 # Dann ohne Mods weiterlaufen statt in einer Absturzschleife zu hängen.
                 if [[ -n "$MOD_DLL_OVERRIDES" ]] && (( $(date +%s) - SERVER_STARTED_AT < 120 )); then
                     warn "Server ist mit Mods direkt nach dem Start abgestürzt - starte OHNE Mods weiter"
-                    if [[ -f "$SERVER_DIR/EnshroudedTogether.log" ]]; then
+                    if [[ -s "$SERVER_DIR/EnshroudedTogether.log" ]]; then
                         warn "EnshroudedTogether.log:"
                         sed 's/^/    /' "$SERVER_DIR/EnshroudedTogether.log"
                     fi

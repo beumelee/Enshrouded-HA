@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2
+
+- Altes `EnshroudedTogether.log` wird vor jedem Start gelöscht, damit nach einem Absturz
+  nicht die Meldungen vom letzten erfolgreichen Start im Log erscheinen
+
 ## 1.1.1
 
 - Stürzt der Server mit Mods direkt nach dem Start ab (z. B. weil die Mod nach einem
