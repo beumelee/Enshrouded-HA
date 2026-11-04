@@ -436,6 +436,19 @@ main() {
                 exit 0
                 ;;
             crash)
+                # Mods, die nicht zum Server-Build passen, beenden den Server sofort.
+                # Dann ohne Mods weiterlaufen statt in einer Absturzschleife zu hängen.
+                if [[ -n "$MOD_DLL_OVERRIDES" ]] && (( $(date +%s) - SERVER_STARTED_AT < 120 )); then
+                    warn "Server ist mit Mods direkt nach dem Start abgestürzt - starte OHNE Mods weiter"
+                    if [[ -f "$SERVER_DIR/EnshroudedTogether.log" ]]; then
+                        warn "EnshroudedTogether.log:"
+                        sed 's/^/    /' "$SERVER_DIR/EnshroudedTogether.log"
+                    fi
+                    warn "Vermutlich passt die Mod nicht zum Server-Build $(installed_build). Neue Mod-Version in mods/ legen und die App neu starten."
+                    ENABLE_MODS=false
+                    pause 5
+                    continue
+                fi
                 # Mehrere Abstürze kurz nach dem Start -> aufgeben, damit der Fehler sichtbar wird
                 if (( $(date +%s) - SERVER_STARTED_AT < 300 )); then
                     crashes=$(( crashes + 1 ))

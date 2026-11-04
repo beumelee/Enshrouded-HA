@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+- Stürzt der Server mit Mods direkt nach dem Start ab (z. B. weil die Mod nach einem
+  Spiel-Update nicht mehr zum Server-Build passt), läuft er automatisch ohne Mods weiter,
+  statt in einer Absturzschleife zu enden. Das Mod-Log wird dabei im App-Log ausgegeben.
+
 ## 1.1.0
 
 - Mod-Unterstützung: Dateien und `.zip`-Archive aus `mods/` im App-Konfigurationsordner
