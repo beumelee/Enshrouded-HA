@@ -158,3 +158,16 @@ Ein Enshrouded-Server braucht je nach Weltgröße und Spielerzahl meist 3 bis 6 
 | „Version stimmt nicht überein“ | Nach einem Spiel-Update die App neu starten; sie lädt die neue Version sofort. |
 | App startet nicht | Protokoll lesen; meist Passwort zu kurz oder doppelt, oder `enshrouded_server.json` kaputt. Eine kaputte Datei kannst du löschen, sie wird neu angelegt. |
 | Freunde fliegen alle paar Minuten raus | Im Protokoll nach `RAM-Verbrauch … über dem Limit` suchen und das Limit erhöhen. |
+
+## Mods
+
+Lege Server-Mods (z. B. [Enshrouded Together – Shared Progression](https://www.nexusmods.com/enshrouded/mods/205))
+in den Ordner `mods` im App-Konfigurationsordner
+(Samba: `addon_configs\980fa927_enshrouded\mods`). Beim Start wird jede `.zip` neben
+`enshrouded_server.exe` entpackt, andere Dateien werden kopiert. DLLs bekommen automatisch
+einen Wine-Override (`native,builtin`), sonst würde Proton seine eingebaute Version laden.
+
+- Mod entfernen: Datei aus `mods/` löschen und App neu starten.
+- Alle Mods abschalten: Option **Mods** ausschalten.
+- Viele Mods prüfen den genauen Server-Build. Nach einem Spiel-Update funktioniert die Mod
+  evtl. erst mit einer neuen Mod-Version – dann neue `.zip` in `mods/` legen.

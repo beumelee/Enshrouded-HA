@@ -1,5 +1,5 @@
 name: Enshrouded Dedicated Server
-version: "1.0.0"
+version: "1.1.0"
 slug: enshrouded
 url: https://github.com/beumelee/Enshrouded-HA
 description: >-
@@ -34,6 +34,7 @@ options:
   auto_update: true
   update_check_interval: 30
   memory_limit_gb: 10
+  enable_mods: true
 schema:
   server_name: str
   admin_password: password
@@ -47,3 +48,4 @@ schema:
   auto_update: bool
   update_check_interval: int(0,1440)
   memory_limit_gb: int(4,64)
+  enable_mods: bool?

@@ -45,5 +45,10 @@ configuration:
     name: RAM-Limit (GB)
     description: >-
       Liegt der Server länger als 90 Sekunden über diesem Wert, wird er sauber neu gestartet.
+  enable_mods:
+    name: Mods
+    description: >-
+      Alles aus dem Ordner "mods" im App-Konfigurationsordner neben
+      enshrouded_server.exe legen (.zip wird entpackt). Aus = Server ohne Mods.
 network:
   15637/udp: Enshrouded Spiel- und Query-Port (am Router als UDP freigeben)

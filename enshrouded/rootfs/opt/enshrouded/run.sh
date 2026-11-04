@@ -12,6 +12,8 @@ SERVER_CONFIG="${SERVER_DIR}/enshrouded_server.json"
 SERVER_LOG="${SERVER_DIR}/logs/enshrouded_server.log"
 CONFIG_FILE="${CONFIG_DIR}/enshrouded_server.json"
 SAVE_DIR="${CONFIG_DIR}/savegame"
+MODS_DIR="${CONFIG_DIR}/mods"
+MODS_MANIFEST="${SERVER_DIR}/.installed_mods"
 STEAMCMD="${STEAMCMD_PATH}/steamcmd.sh"
 PROTON="${PROTON_PATH}/proton"
 STEAM_APP_ID=2278520
@@ -62,6 +64,7 @@ read_options() {
     AUTO_UPDATE=$(option auto_update)
     UPDATE_CHECK_INTERVAL=$(option update_check_interval)
     MEMORY_LIMIT_GB=$(option memory_limit_gb)
+    ENABLE_MODS=$(option enable_mods)
 
     [[ -n "$SERVER_NAME" ]] || fatal "server_name darf nicht leer sein"
     (( ${#ADMIN_PASSWORD} >= 8 )) || fatal "admin_password muss mindestens 8 Zeichen lang sein"
@@ -85,6 +88,7 @@ ensure_owned() {
 
 prepare_dirs() {
     ensure_owned "$SERVER_DIR" "$SERVER_DIR/logs" "$STEAM_COMPAT_DATA_PATH" "$SAVE_DIR"
+    mkdir -p "$MODS_DIR"
     # Per Samba hineinkopierte Spielstände gehören root -> immer korrigieren
     chown -R steam:steam "$SAVE_DIR"
 
@@ -99,6 +103,75 @@ prepare_dirs() {
     if ! awk -F: '/^cpu MHz/ && $2 + 0 > 0 { found = 1 } END { exit !found }' /proc/cpuinfo; then
         export CPU_MHZ=1500.000
     fi
+}
+
+# Mods aus /config/mods neben enshrouded_server.exe legen.
+# .zip-Dateien werden entpackt, alles andere 1:1 kopiert. Was beim letzten Start
+# installiert wurde, steht im Manifest und wird vorher wieder entfernt, damit
+# gelöschte oder deaktivierte Mods wirklich verschwinden.
+install_mods() {
+    MOD_DLL_OVERRIDES=""
+    if [[ -f "$MODS_MANIFEST" ]]; then
+        local old
+        while IFS= read -r old; do
+            [[ -n "$old" && "$old" != *..* && "$old" != */* ]] || continue
+            case "$old" in
+                enshrouded_server.exe|enshrouded_server.json|savegame|logs|steamapps) continue ;;
+            esac
+            rm -rf -- "${SERVER_DIR:?}/${old}"
+        done < "$MODS_MANIFEST"
+        rm -f "$MODS_MANIFEST"
+    fi
+
+    [[ "$ENABLE_MODS" != false ]] || return 0
+
+    local entry name installed=()
+    shopt -s nullglob
+    for entry in "$MODS_DIR"/*; do
+        name=$(basename "$entry")
+        case "$name" in
+            *.zip)
+                info "Entpacke Mod ${name}"
+                local listed
+                if ! listed=$(python3 -I - "$entry" "$SERVER_DIR" <<'PY'
+import sys, zipfile
+src, dest = sys.argv[1], sys.argv[2]
+with zipfile.ZipFile(src) as z:
+    z.extractall(dest)
+    tops = {n.split("/", 1)[0] for n in z.namelist() if n and not n.startswith("/")}
+print("\n".join(sorted(t for t in tops if t and t != "..")))
+PY
+                ); then
+                    warn "Mod ${name} konnte nicht entpackt werden - übersprungen"
+                    continue
+                fi
+                mapfile -t -O "${#installed[@]}" installed <<< "$listed"
+                ;;
+            *.md|*.txt|README*)
+                ;;
+            *)
+                info "Installiere Mod-Datei ${name}"
+                cp -rf -- "$entry" "$SERVER_DIR/" && installed+=("$name")
+                ;;
+        esac
+    done
+    shopt -u nullglob
+
+    (( ${#installed[@]} )) || return 0
+    printf '%s\n' "${installed[@]}" > "$MODS_MANIFEST"
+    local item dll
+    for item in "${installed[@]}"; do
+        [[ -n "$item" && -e "$SERVER_DIR/$item" ]] || continue
+        chown -R steam:steam "$SERVER_DIR/$item"
+        # Wine nimmt sonst seine eingebaute DLL (z. B. dbghelp) statt der Mod-DLL
+        if [[ "$item" == *.[dD][lL][lL] ]]; then
+            dll=${item%.*}
+            MOD_DLL_OVERRIDES+="${MOD_DLL_OVERRIDES:+;}${dll,,}=n,b"
+        fi
+    done
+    info "Mods aktiv: ${installed[*]}"
+    [[ -n "$MOD_DLL_OVERRIDES" ]] && info "DLL-Overrides: ${MOD_DLL_OVERRIDES}"
+    return 0
 }
 
 installed_build() {
@@ -218,11 +291,15 @@ start_server() {
     info "Starte Enshrouded-Server \"${SERVER_NAME}\" (${SLOT_COUNT} Plätze, Preset ${GAME_PRESET})"
     : > "$SERVER_LOG"
     chown steam:steam "$SERVER_LOG"
-    tail -n 0 -F "$SERVER_LOG" 2>/dev/null &
+    local logs=("$SERVER_LOG")
+    # Mods wie EnshroudedTogether schreiben ihr eigenes Log neben die .exe
+    [[ -n "$MOD_DLL_OVERRIDES" ]] && logs+=("$SERVER_DIR/EnshroudedTogether.log")
+    tail -q -n 0 -F "${logs[@]}" 2>/dev/null &
     TAIL_PID=$!
 
-    # Proton erwartet einen relativen Pfad zur .exe im Installationsordner
-    (cd "$SERVER_DIR" && exec gosu steam "$PROTON" run enshrouded_server.exe) &
+    # Proton erwartet einen relativen Pfad zur .exe im Installationsordner.
+    # Proton hängt seine eigenen Overrides an WINEDLLOVERRIDES an.
+    (cd "$SERVER_DIR" && WINEDLLOVERRIDES="${MOD_DLL_OVERRIDES}" exec gosu steam "$PROTON" run enshrouded_server.exe) &
     SERVER_PID=$!
     SERVER_STARTED_AT=$(date +%s)
 }
@@ -335,7 +412,7 @@ monitor_server() {
 main() {
     read_options
     prepare_dirs
-    info "RAM-Limit: ${MEMORY_LIMIT_GB} GB, automatische Updates: ${AUTO_UPDATE}"
+    info "RAM-Limit: ${MEMORY_LIMIT_GB} GB, automatische Updates: ${AUTO_UPDATE}, Mods: ${ENABLE_MODS}"
 
     if [[ "$AUTO_UPDATE" == true || ! -f "$SERVER_DIR/enshrouded_server.exe" ]]; then
         if ! update_server; then
@@ -348,6 +425,7 @@ main() {
     local crashes=0 memory_restarts=0
     while (( ! STOP_REQUESTED )); do
         write_config
+        install_mods
         start_server
         monitor_server
         stop_server
